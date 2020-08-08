@@ -68,7 +68,7 @@ class AutoEncoder1D(nn.Module):
         return sum([p.numel() for p in self.parameters()])
 
 if __name__ == '__main__':
-    model = AutoEncoder1D(input_size=14, num_steps=4, kernel_size=3, features_multiplier=1.4)
+    model = AutoEncoder1D(input_size=14, num_steps=4, kernel_size=3, features_multiplier=1.25)
     print(model)
     print(f"Parameters: {model.parameters_count}")
 
