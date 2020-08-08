@@ -4,7 +4,7 @@ import torch.nn as nn
 
 
 class AutoEncoder1D(nn.Module):
-    def __init__(self, input_size, num_steps, kernel_size=3):
+    def __init__(self, input_size, num_steps, kernel_size=3, features_multiplier=1.5):
         """
         :param input_size: How many features in the input
         :param bottle_neck_size: The size of the latent descriptor / num of features
@@ -12,31 +12,37 @@ class AutoEncoder1D(nn.Module):
         """
         super(AutoEncoder1D, self).__init__()
 
+        # parameters
+        self.input_size = input_size
+        self.num_steps = num_steps
         self.kernel_size = kernel_size
+        self.features_multiplier = features_multiplier
+
         self.bottle_neck = None
-        self.layers = self.build_recursive(input_size, num_steps)
+        self.layers = self.build_recursive(self.input_size, self.num_steps)
         self.net = nn.ModuleList(self.layers)
 
     def build_recursive(self, input_size, num_steps):
         if num_steps == 0:
             return []
 
-        # diff = (input_size - self.bottle_neck_size) // num_steps
-        # out_size = input_size - diff
+        mid_size = int(input_size * self.features_multiplier)
+
         enc = [nn.Conv1d(in_channels=input_size,
-                         out_channels=input_size * 2,
+                         out_channels=mid_size,
                          stride=2,
                          kernel_size=self.kernel_size,
-                         padding=2),
+                         padding=self.kernel_size // 2),
                nn.ReLU()]
-        dec = [nn.ConvTranspose1d(in_channels=input_size * 2,
+        dec = [nn.ConvTranspose1d(in_channels=mid_size,
                                   out_channels=input_size,
                                   stride=2,
-                                  kernel_size=self.kernel_size),
+                                  kernel_size=self.kernel_size,
+                                  padding=self.kernel_size // 2),
                nn.ReLU()]
-        mid = self.build_recursive(input_size * 2, num_steps - 1)
-        if num_steps - 1 == 1:
-            self.bottle_neck = mid[0]
+        mid = self.build_recursive(mid_size, num_steps - 1)
+        if num_steps == 1:
+            self.bottle_neck = enc[1]
 
         return enc + mid + dec
 
@@ -48,6 +54,7 @@ class AutoEncoder1D(nn.Module):
                 sizes.append(x.shape[-1])
                 x = l(x)
             elif isinstance(l, nn.ConvTranspose1d):
+                # x = l(x)
                 x = l(x, output_size=(sizes.pop(),))
             else:
                 x = l(x)
@@ -58,13 +65,15 @@ class AutoEncoder1D(nn.Module):
 
 
 if __name__ == '__main__':
-    model = AutoEncoder1D(input_size=14, num_steps=2, kernel_size=5)
+    model = AutoEncoder1D(input_size=14, num_steps=2, kernel_size=7, features_multiplier=1.25)
     print(model)
 
     x = torch.rand((1, 14, 20))  # batch, time, features
+
+    print(f"Input shape: {x.shape}")
     y = model(x)
-    print(y.shape)
+    print(f"Output shape: {y.shape}")
 
     y, interm = model(x, True)
-    print(y.shape)
-    print(interm.shape)
+    print(f"Output shape: {y.shape}")
+    print(f"Intermediate shape: {interm.shape}")
