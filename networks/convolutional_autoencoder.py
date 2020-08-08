@@ -63,12 +63,16 @@ class AutoEncoder1D(nn.Module):
 
         return (x, interm) if return_intermidiate else x
 
+    @property
+    def parameters_count(self):
+        return sum([p.numel() for p in self.parameters()])
 
 if __name__ == '__main__':
-    model = AutoEncoder1D(input_size=14, num_steps=2, kernel_size=7, features_multiplier=1.25)
+    model = AutoEncoder1D(input_size=14, num_steps=4, kernel_size=3, features_multiplier=1.4)
     print(model)
+    print(f"Parameters: {model.parameters_count}")
 
-    x = torch.rand((1, 14, 20))  # batch, time, features
+    x = torch.rand((1, 14, 10))  # batch, time, features
 
     print(f"Input shape: {x.shape}")
     y = model(x)
