@@ -1,3 +1,4 @@
+import path
 from torch.utils import data
 from torchvision.io import read_video
 import torch
@@ -6,6 +7,7 @@ from torchvision.transforms import transforms
 
 class VideoLoader(data.Dataset):
 	def __init__(self, video_path, start_time=0, end_time=None, stride=None, transforms=None):
+		assert path.exists(video_path), f'wrong video path'
 		self.video_path = video_path
 		self.start_time = start_time
 		self.end_time = end_time
