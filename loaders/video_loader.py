@@ -52,4 +52,4 @@ if __name__ == '__main__':
 	for network_inputs, original_frames in data_iter:
 		# 	pass network_inputs to the model
 		# 	predictions = model(network_inputs)
-		pass
+		print(network_inputs.shape)
