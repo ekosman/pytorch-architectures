@@ -3,6 +3,7 @@ from torchvision.io import read_video
 import torch
 from torchvision.transforms import transforms
 from os import path
+import matplotlib.pyplot as plt
 
 
 class VideoLoader(data.Dataset):
@@ -63,7 +64,14 @@ if __name__ == '__main__':
 											num_workers=1,  # 4, # change this part accordingly
 											pin_memory=True)
 
+	print(f"loader length: {len(data_loader)}")
+	print(f"iterator length: {len(data_iter)}")
 	for network_inputs, original_frames in data_iter:
 		# 	pass network_inputs to the model
 		# 	predictions = model(network_inputs)
 		print(network_inputs.shape)
+
+		for original_frame in original_frames:
+			plt.figure()
+			plt.imshow(torch.transpose(original_frame, dim0=0, dim1=2).numpy())
+			plt.show()
