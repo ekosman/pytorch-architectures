@@ -1,4 +1,3 @@
-import path
 from torch.utils import data
 from torchvision.io import read_video
 import torch
