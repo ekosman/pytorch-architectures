@@ -39,7 +39,7 @@ if __name__ == '__main__':
 	])
 
 	data_loader = VideoLoader(
-		video_path=r'../videos/\videoplayback.mp4',
+		video_path=r'../videos/videoplayback.mp4',
 		start_time=0,
 		end_time=None,
 		stride=None,
