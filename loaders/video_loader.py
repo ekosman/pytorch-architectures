@@ -43,7 +43,7 @@ if __name__ == '__main__':
 		start_time=0,
 		end_time=None,
 		stride=None,
-		transforms=None)
+		transforms=transform)
 
 	data_iter = torch.utils.data.DataLoader(data_loader,
 											batch_size=10,
