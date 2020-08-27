@@ -62,7 +62,7 @@ if __name__ == '__main__':
 
 	data_iter = torch.utils.data.DataLoader(data_loader,
 											batch_size=10,
-											shuffle=True,
+											shuffle=False,
 											num_workers=1,  # 4, # change this part accordingly
 											pin_memory=True)
 

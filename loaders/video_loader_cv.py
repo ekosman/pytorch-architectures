@@ -1,3 +1,4 @@
+import cv2
 from torch.utils import data
 from torchvision.datasets.video_utils import VideoClips
 from torchvision.io import read_video
@@ -20,25 +21,25 @@ class VideoLoader(data.Dataset):
 		"""
 		assert path.exists(video_path), f'wrong video path'
 
-		self.video_clips = VideoClips(video_paths=[video_path],
-									  clip_length_in_frames=1,
-									  frames_between_clips=1)
-
-		self.stride = stride
-		self.fps = self.video_clips.video_fps[0]
-		self.frame_stride = stride * self.fps
 		self.video_path = video_path
-		self.start_time = start_time
-		self.start_frame = self.start_time * self.fps
-		self.end_time = end_time or len(self.video_clips) / self.fps
+		self.cv_cap = cv2.VideoCapture(video_path)
+
+		self.cv_cap.set(cv2.CAP_PROP_POS_AVI_RATIO,1)
+		self.duration_ms = self.cv_cap.get(cv2.CAP_PROP_POS_MSEC)
+		self.fps = self.cv_cap.get(cv2.CAP_PROP_FPS)
+
+		self.stride_ms = stride * 1000
+		self.start_time_ms = start_time * 1000
+		self.end_time_ms = end_time * 1000
+
 		self.transforms = transforms
 
 	def __len__(self):
-		return int((self.end_time - self.start_time) / self.stride)
+		return int((self.end_time_ms - self.start_time_ms) / self.stride_ms)
 
 	def __getitem__(self, item):
-		item = int(self.start_frame + item * self.frame_stride)
-		frame, _, _, _ = self.video_clips.get_clip(item)
+		self.cv_cap.set(cv2.CV_CAP_PROP_POS_MSEC, self.start_time_ms + item * self.start_time_ms)
+		ret, frame = self.cv_cap.read()
 		frame = frame.squeeze(0).permute(2, 0, 1)
 
 		if self.transforms:
@@ -58,8 +59,8 @@ if __name__ == '__main__':
 
 	data_loader = VideoLoader(
 		video_path=r'../videos/videoplayback.mp4',
-		start_time=125,
-		end_time=245,
+		start_time=121,
+		end_time=140,
 		stride=0.8,
 		transforms=transform)
 
@@ -71,7 +72,6 @@ if __name__ == '__main__':
 
 	print(f"loader length: {len(data_loader)}")
 	print(f"iterator length: {len(data_iter)}")
-	print(getsizeof(data_loader.video_clips))
 	i=1
 	for network_inputs, original_frames in data_iter:
 		# 	pass network_inputs to the model
