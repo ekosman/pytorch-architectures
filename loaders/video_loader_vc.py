@@ -1,11 +1,11 @@
-from sys import getsizeof
-
 from torch.utils import data
+from torchvision.datasets.video_utils import VideoClips
 from torchvision.io import read_video
 import torch
 from torchvision.transforms import transforms
 from os import path
 import matplotlib.pyplot as plt
+from sys import getsizeof
 
 
 class VideoLoader(data.Dataset):
@@ -19,24 +19,27 @@ class VideoLoader(data.Dataset):
 			transforms (torchvision.transforms): transform to apply to each frame
 		"""
 		assert path.exists(video_path), f'wrong video path'
+
+		self.video_clips = VideoClips(video_paths=[video_path],
+									  clip_length_in_frames=1,
+									  frames_between_clips=1)
+
+		self.stride = stride
+		self.fps = self.video_clips.video_fps[0]
+		self.frame_stride = int(stride * self.fps)
 		self.video_path = video_path
 		self.start_time = start_time
-		self.end_time = end_time
-		self.stride = stride
+		self.start_frame = int(self.start_time * self.fps)
+		self.end_time = end_time or len(self.video_clips) / self.fps
 		self.transforms = transforms
-		self.video_frames, _, self.info = read_video(filename=video_path,
-													 start_pts=self.start_time,
-													 end_pts=self.end_time,
-													 pts_unit='sec')
-		self.frame_stride = int(stride * self.info['video_fps'])
-		self.video_frames = self.video_frames[list(range(0, self.video_frames.shape[0], self.frame_stride)), ...]
 
 	def __len__(self):
-		return len(self.video_frames)
+		return int((self.end_time - self.start_time) / self.stride)
 
 	def __getitem__(self, item):
-		frame = self.video_frames[item, ...]
-		frame = frame.permute(2, 0, 1)
+		item = self.start_frame + item * self.frame_stride
+		frame, _, _, _ = self.video_clips.get_clip(item)
+		frame = frame.squeeze(0).permute(2, 0, 1)
 
 		if self.transforms:
 			tranformed_frame = self.transforms(frame)
@@ -68,7 +71,7 @@ if __name__ == '__main__':
 
 	print(f"loader length: {len(data_loader)}")
 	print(f"iterator length: {len(data_iter)}")
-	print(getsizeof(data_loader.video_frames))
+	print(getsizeof(data_loader.video_clips))
 	for network_inputs, original_frames in data_iter:
 		# 	pass network_inputs to the model
 		# 	predictions = model(network_inputs)
